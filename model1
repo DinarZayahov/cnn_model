@@ -1,0 +1,52 @@
+from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from tensorflow.keras.layers import Conv2D, MaxPool2D, Flatten, Dense, Dropout, BatchNormalization
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import SGD, Nadam
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import numpy as np
+
+x_train = np.load('drive/My Drive/Colab Notebooks/x.npy')
+y_train = np.load('drive/My Drive/Colab Notebooks/y.npy')
+
+
+def make_model():
+    m = Sequential()
+    m.add(Conv2D(filters=96, kernel_size=5,
+                 input_shape=(28, 28, 1), activation='relu'))
+    m.add(MaxPool2D(pool_size=2, strides=1))
+    m.add(BatchNormalization())
+    m.add(Conv2D(filters=128, kernel_size=3,
+                 activation='relu'))
+    m.add(MaxPool2D(pool_size=2))
+    m.add(BatchNormalization())
+    m.add(Flatten())
+    m.add(Dense(512, activation='relu'))
+    m.add(BatchNormalization())
+    m.add(Dropout(0.2))
+    m.add(Dense(512, activation='relu'))
+    m.add(BatchNormalization())
+    m.add(Dropout(0.2))
+    m.add(Dense(10, activation='softmax'))
+    return m
+
+
+model = make_model()
+model.compile(optimizer=Nadam(1e-4, clipnorm=1), loss='sparse_categorical_crossentropy',
+             metrics='accuracy')
+early_stopping = EarlyStopping(monitor='val_accuracy', patience=10,
+                              restore_best_weights=True)
+lr_schedule = ReduceLROnPlateau(monitor='val_accuracy',
+                               factor=0.3, patience=6)
+generator = ImageDataGenerator(rotation_range=20,
+                              width_shift_range=0.1,
+                              zoom_range=0.15,
+                              horizontal_flip=True,
+                              validation_split=0.15
+                              )
+model.fit(generator.flow(x_train, y_train, batch_size=128),
+          steps_per_epoch=len(x_train) / 128,
+          validation_data=generator.flow(x_train, y_train, batch_size=128, subset='validation'),
+         epochs=5, verbose=2,
+         callbacks=[early_stopping, lr_schedule])
+
+model.save('model.h5')
