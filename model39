@@ -5,8 +5,8 @@ from tensorflow.keras.optimizers import SGD, Nadam, Adam
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import numpy as np
 
-x_train = np.load('drive/My Drive/Colab Notebooks/x.npy')
-y_train = np.load('drive/My Drive/Colab Notebooks/y.npy')
+x_train = np.load('x.npy')
+y_train = np.load('y.npy')
 
 
 def make_model():
